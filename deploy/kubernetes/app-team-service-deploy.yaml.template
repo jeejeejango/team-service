@@ -5,7 +5,7 @@ metadata:
   labels:
     app: team-service
 spec:
-  type: LoadBalancer
+  # type: LoadBalancer
   ports:
   - name: http
     # LoadBalancer type
