@@ -1,0 +1,44 @@
+logging:
+  level:
+    ROOT: INFO
+    org.jeejeejango: DEBUG
+    org.springframework.data: INFO
+    org.springframework.web: INFO
+
+
+spring:
+  profiles:
+    active: dev
+
+  devtools:
+    restart:
+      enabled: true
+
+  cache:
+    jcache:
+      config: classpath:/config/jcache/ehcache-dev.xml
+
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:file:./target/h2/ms_team;DB_CLOSE_DELAY=-1
+    username: sa
+    password: sa
+
+  h2:
+    console:
+      enabled: true
+
+  jackson:
+    serialization.indent_output: true
+
+  jpa:
+    database: h2
+    show-sql: true
+    properties:
+      hibernate.cache.use_query_cache: false
+      hibernate.generate_statistics: true
+      hibernate.cache.use_second_level_cache: true
+      hibernate.javax.cache.missing_cache_strategy: create-warn
+
+  liquibase:
+    contexts: dev

@@ -1,0 +1,34 @@
+logging:
+  level:
+    ROOT: ERROR
+    org.jeejeejango: INFO
+
+spring:
+  profiles:
+    active: prod
+
+  devtools:
+    restart:
+      enabled: false
+
+  cache:
+    jcache:
+      config: classpath:/config/jcache/ehcache-prod.xml
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: password1
+    url: jdbc:mysql://localhost:3306/ms_team?characterEncoding=UTF-8
+
+  jpa:
+    database: mysql
+    show-sql: false
+    properties:
+      hibernate.cache.use_query_cache: false
+      hibernate.generate_statistics: false
+      hibernate.cache.use_second_level_cache: true
+      hibernate.javax.cache.missing_cache_strategy: fail
+
+  liquibase:
+    contexts: prod

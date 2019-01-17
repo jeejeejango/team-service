@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: Team Service
+
+  profiles:
+    active: @spring.profiles.active@
+
+  cache:
+    type: jcache
+    jcache:
+      provider: org.ehcache.jsr107.EhcacheCachingProvider
+
+  hateoas:
+    use-hal-as-default-json-media-type: false
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      naming:
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+      ddl-auto: none
+
+  liquibase:
+    change-log: classpath:/config/liquibase/changelog-master.xml
+
+  messages:
+    basename: i18n/messages
+
+  mvc:
+    favicon:
+      enabled: false
+
+  thymeleaf:
+    mode: HTML
+
+
+info:
+  app:
+    name: @project.name@
+    description: @project.description@
+    version: @project.version@
+    profile: @spring.profiles.active@
+    encoding: @project.build.sourceEncoding@
+    java:
+      version=@java.version@
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      base-path: /management
+  endpoint:
+    health:
+      show-details: when_authorized
+    metrics:
+      enabled: true
+

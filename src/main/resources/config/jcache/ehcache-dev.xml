@@ -1,0 +1,21 @@
+<config xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+        xmlns='http://www.ehcache.org/v3'>
+
+    <service>
+        <jsr107:defaults enable-management="true" enable-statistics="true" default-template="defaultCacheTemplate"/>
+    </service>
+
+    <persistence directory="./target/cache"/>
+
+    <cache-template name="defaultCacheTemplate">
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <resources>
+            <heap>200</heap>
+            <offheap unit="MB">1</offheap>
+            <disk persistent="true" unit="MB">10</disk>
+        </resources>
+    </cache-template>
+
+</config>

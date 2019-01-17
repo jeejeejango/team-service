@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: team-mysql
+  labels:
+    app: team-mysql
+spec:
+  #type: NodePort
+  ports:
+  - port: 3306
+    #targetPort: 3306
+    #nodePort: 31000
+  selector:
+    app: team-mysql
+  clusterIP: None
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: team-mysql-secret
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: cGFzc3dvcmQx
+  MYSQL_DATABASE: bXNfdXNlcg==
+  MYSQL_USER: dGVzdHVzZXI=
+  MYSQL_PASSWORD: cGFzc3dvcmQy
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: team-mysql-pv-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: team-mysql
+  labels:
+    app: team-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: team-mysql
+  template:
+    metadata:
+      labels:
+        app: team-mysql
+    spec:
+      containers:
+      - image: mysql:8.0.13
+        name: team-mysql
+        args:
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+        - --default-authentication-plugin=mysql_native_password
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: team-mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: team-mysql-secret
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: team-mysql-secret
+              key: MYSQL_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: team-mysql-secret
+              key: MYSQL_DATABASE
+        ports:
+        - containerPort: 3306
+          name: team-mysql
+        volumeMounts:
+        - name: team-mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: team-mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: team-mysql-pv-claim

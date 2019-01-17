@@ -1,0 +1,129 @@
+build:
+  box: maven:3.6.0-jdk-8-alpine
+  steps:
+    - script:
+        name: Install procps
+        code: apk --no-cache add procps
+    - wercker/maven:
+        goals: clean package
+        cache_repo: true
+        profiles: prod
+
+
+push-release:
+  box: openjdk:8-jre-alpine
+  steps:
+    - script:
+        name: copy jar file to source root
+        code: |
+          mkdir $WERCKER_SOURCE_DIR/dist
+          cp $WERCKER_SOURCE_DIR/target/team-service.jar $WERCKER_SOURCE_DIR/dist/app.jar
+    - script:
+        name: clear cache content
+        code: |
+          rm -rf $WERCKER_CACHE_DIR
+          rm -rf $WERCKER_OUTPUT_DIR
+          rm -rf $WERCKER_SOURCE_DIR/target
+    - internal/docker-push:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
+        registry: $DOCKER_REGISTRY
+        repository: $REPOSITORY/team-service
+        cmd: java -Djava.security.egd=file:/dev/./urandom -jar /pipeline/source/dist/app.jar
+
+
+scan-release:
+  box: alpine
+  docker: true
+  steps:
+    - script:
+        name: Install docker
+        code: apk --no-cache add docker
+    - script:
+        name: Install Curl
+        code: apk --no-cache add curl
+    - script:
+        name: Install clair-scanner
+        code: |
+          curl -L -O https://github.com/arminc/clair-scanner/releases/download/v8/clair-scanner_linux_amd64
+          mv clair-scanner_linux_amd64 clair-scanner
+          chmod +x clair-scanner
+    - script:
+      name: Start up clair server and database
+      code: |
+        NETWORK=`docker network ls | grep "w-" | awk ' { print $1; } '`
+        docker run --network $NETWORK --name postgres --rm -d arminc/clair-db:2018-10-01
+        sleep 10 # to make sure clair service has started
+        docker run --network $NETWORK --name clair --rm -d arminc/clair-local-scan:v2.0.6
+    - script:
+      name: Pull image
+      code: |
+        docker login $DOCKER_REGISTRY --username="$DOCKER_USERNAME" --password="$DOCKER_PASSWORD"
+        docker pull $DOCKER_REGISTRY/$REPOSITORY/team-service
+    - script:
+      name: Scan an image
+      code: |
+        echo "docker network:"
+        docker network ls | grep "w-" | awk ' { print $1; } ' | xargs docker network inspect
+        docker ps -a
+
+        # todo: improve error trap
+        ./clair-scanner --ip=`hostname -i` \
+          --report="report.json" \
+          --threshold="High" \
+          --clair="http://clair:6060" \
+          $DOCKER_REGISTRY/$REPOSITORY/team-service
+
+        OK=`grep -i "high cve-" report.json | wc -l`
+        echo "status = " $OK
+
+        if [ "$OK" == "0" ]; then
+          echo "image was clean, continuing..."
+        else
+          echo "image had vulnerability, aborting"
+          exit 1
+        fi
+
+
+inject-secret:
+  box:
+    id: alpine
+    cmd: /bin/sh
+  steps:
+
+    - kubectl:
+        name: delete secret
+        server: $KUBERNETES_MASTER
+        token: $KUBERNETES_TOKEN
+        insecure-skip-tls-verify: true
+        command: delete secret oke-demo-secret -n $OKE_NAMESPACE; echo delete registry secret
+
+    - kubectl:
+        name: create secret
+        server: $KUBERNETES_MASTER
+        token: $KUBERNETES_TOKEN
+        insecure-skip-tls-verify: true
+        command: create secret docker-registry $OKE_SECRET --docker-server=$DOCKER_REGISTRY --docker-username="$DOCKER_USERNAME" --docker-password="$DOCKER_PASSWORD" --docker-email=$DOCKER_EMAIL -n $OKE_NAMESPACE; echo create registry secret
+
+
+deploy-to-cluster:
+  box:
+    id: alpine
+    cmd: /bin/sh
+  steps:
+
+    - bash-template:
+        input: ./deploy/kubernetes/*.template*
+
+    - script:
+        name: "View Kubernetes config"
+        code: |
+          cat $WERCKER_SOURCE_DIR/deploy/kubernetes/db-team-mysql-deploy.yaml
+          cat $WERCKER_SOURCE_DIR/deploy/kubernetes/app-team-service-deploy.yaml
+
+    - kubectl:
+        name: deploy to kubernetes
+        server: $KUBERNETES_MASTER
+        token: $KUBERNETES_TOKEN
+        insecure-skip-tls-verify: true
+        command: apply -f $WERCKER_SOURCE_DIR/deploy/kubernetes/ -n ${OKE_NAMESPACE}
