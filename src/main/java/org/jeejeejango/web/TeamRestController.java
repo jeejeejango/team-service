@@ -1,9 +1,8 @@
 package org.jeejeejango.web;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jeejeejango.entity.Team;
 import org.jeejeejango.repository.TeamRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Pageable;
@@ -31,9 +30,8 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
  */
 @RestController
 @RequestMapping("/api/v1/teams")
+@Slf4j
 public class TeamRestController {
-
-    private static final Logger logger = LoggerFactory.getLogger(TeamRestController.class);
 
     private TeamRepository teamRepository;
 
@@ -45,8 +43,8 @@ public class TeamRestController {
 
     @GetMapping
     public ResponseEntity<Collection<Team>> getAllTeams(Pageable pageable) {
-        if (logger.isInfoEnabled()) {
-            logger.info("find all team, pageable {}", pageable);
+        if (log.isInfoEnabled()) {
+            log.info("find all team, pageable {}", pageable);
         }
         return new ResponseEntity<>(teamRepository.findAll(pageable).getContent(), HttpStatus.OK);
     }
@@ -58,8 +56,8 @@ public class TeamRestController {
                                                            Pageable pageable) {
         Team team = new Team(name, description);
 
-        if (logger.isInfoEnabled()) {
-            logger.info("search team {}, pageable {}", team, pageable);
+        if (log.isInfoEnabled()) {
+            log.info("search team {}, pageable {}", team, pageable);
         }
 
         ExampleMatcher matcher = ExampleMatcher.matching()
@@ -75,8 +73,8 @@ public class TeamRestController {
     @GetMapping("/{id}")
     public ResponseEntity<Team> getTeamById(@PathVariable Long id) {
         Optional<Team> team = teamRepository.findById(id);
-        if (logger.isInfoEnabled()) {
-            logger.info("team id {} found {}", id, team.isPresent());
+        if (log.isInfoEnabled()) {
+            log.info("team id {} found {}", id, team.isPresent());
         }
         return team.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -86,8 +84,8 @@ public class TeamRestController {
     public ResponseEntity<?> addTeam(@RequestBody @Valid Team team) {
         team.setId(null);
         team = teamRepository.save(team);
-        if (logger.isInfoEnabled()) {
-            logger.info("add team by id {}", team.getId());
+        if (log.isInfoEnabled()) {
+            log.info("add team by id {}", team.getId());
         }
         return ResponseEntity.ok(team);
     }
@@ -96,13 +94,13 @@ public class TeamRestController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTeam(@PathVariable("id") Long id, @RequestBody @Valid Team team) {
         if (!id.equals(team.getId())) {
-            if (logger.isWarnEnabled()) {
-                logger.warn("update team id does not match", id);
+            if (log.isWarnEnabled()) {
+                log.warn("update team id does not match", id);
             }
             return ResponseEntity.badRequest().build();
         }
-        if (logger.isInfoEnabled()) {
-            logger.info("update team by id {}", id);
+        if (log.isInfoEnabled()) {
+            log.info("update team by id {}", id);
         }
         teamRepository.save(team);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -111,8 +109,8 @@ public class TeamRestController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTeam(@PathVariable("id") Long id) {
-        if (logger.isInfoEnabled()) {
-            logger.info("delete team by id {}", id);
+        if (log.isInfoEnabled()) {
+            log.info("delete team by id {}", id);
         }
         teamRepository.deleteById(id);
         return ResponseEntity.ok().build();
