@@ -44,12 +44,12 @@ spec:
         - name: spring_datasource_username
           valueFrom:
             secretKeyRef:
-              name: mysql-secret
+              name: team-mysql-secret
               key: MYSQL_USER
         - name: spring_datasource_password
           valueFrom:
             secretKeyRef:
-              name: mysql-secret
+              name: team-mysql-secret
               key: MYSQL_PASSWORD
       imagePullSecrets:
       - name: ${OKE_SECRET}
