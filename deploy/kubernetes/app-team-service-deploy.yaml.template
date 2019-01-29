@@ -39,6 +39,8 @@ spec:
         - name: server
           containerPort: 8080
         env:
+        - name: build_timestamp
+          value: "${WERCKER_MAIN_PIPELINE_STARTED}"
         - name: spring_datasource_url
           value: jdbc:mysql://team-mysql/${MYSQL_DATABASE_NAME}?characterEncoding=UTF-8
         - name: spring_datasource_username
