@@ -26,15 +26,17 @@ spec:
   selector:
     matchLabels:
       app: team-service
+      version: v1
   template:
     metadata:
       labels:
         app: team-service
+        version: v1
     spec:
       containers:
       - name: team-service
         image: team-service:latest
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - name: server
           containerPort: 8080

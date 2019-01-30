@@ -55,3 +55,7 @@ management:
     metrics:
       enabled: true
 
+
+server:
+  servlet:
+    context-path: /team
