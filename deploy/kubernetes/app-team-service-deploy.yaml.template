@@ -5,13 +5,13 @@ metadata:
   labels:
     app: team-service
 spec:
-  type: LoadBalancer
+  # type: LoadBalancer
   ports:
   - name: http
     # LoadBalancer type
     # port: 80
-    targetPort: 8080
-    # port: 8080
+    # targetPort: 8080
+    port: 8080
   selector:
     app: team-service
 ---
